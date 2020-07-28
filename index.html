@@ -26,6 +26,7 @@
       };
       var player;
       var customers;
+      var ui_bar;
       var prev_x;
       var prev_y;
       var money = 1000;
@@ -36,6 +37,7 @@
         this.load.image("building", "assets/building.png");
         this.load.image("yen", "assets/yen.png");
         this.load.image("customer", "assets/customer_s.png");
+        this.load.image("ui_bar", "assets/ui_bar.png");
         this.load.spritesheet("bike", "assets/bike_deliver_sprite.png", {
           frameWidth: 293,
           frameHeight: 288,
@@ -45,16 +47,16 @@
       function create() {
         this.add.image(400, 300, "back").setScale(2.0);
         buildings = this.physics.add.staticGroup();
-        for (var i = 1; i < 30; i++) {
+        for (var i = 1; i < 24; i++) {
           buildings.create(
             40 + 135 * (i % 6),
-            60 + 135 * Math.floor(i / 6),
+            90 + 135 * Math.floor(i / 6),
             "building"
           );
         }
 
         prev_x = 50;
-        prev_y = 50;
+        prev_y = 100;
         player = this.physics.add.sprite(prev_x, prev_y, "bike").setScale(0.17);
         this.anims.create({
           key: "left",
@@ -76,22 +78,34 @@
         });
         player.anims.play("left", true);
 
-        //  Collide the player and the stars with the platforms
-        this.physics.add.collider(player, buildings);
-
-        //  Some stars to collect, 12 in total, evenly spaced 70 pixels apart along the x axis
-        customers = this.physics.add.group({
-          key: "customer",
-          repeat: 4,
-          setXY: { x: 230, y: 130, stepX: 135 },
+        // initialize position
+        customers = this.physics.add.group();
+        for (var i = 1; i < 20; i++) {
+          customers.create(
+            105 + 135 * (i % 5),
+            140 + 135 * Math.floor(i / 5),
+            "customer"
+          );
+        }
+        customers.children.iterate(function (child) {
+          child.disableBody(true, true);
+          if (Math.random() < 0.2) {
+            child.enableBody(true, child.x, child.y, true, true);
+          }
         });
         this.physics.add.overlap(player, customers, deliverBudget, null, this);
 
-        this.add.image(25, 25, "yen").setScale(0.5);
-        moneyText = this.add.text(46, 8, money, {
-          fontSize: "32px",
+        ui_bar = this.physics.add.staticGroup();
+        ui_bar.create(0, 0, "ui_bar");
+        this.add.image(18, 18, "yen").setScale(0.3);
+        moneyText = this.add.text(36, 8, money, {
+          fontSize: "24px",
           fill: "#000",
         });
+
+        //  Collide the player and the stars with the platforms
+        this.physics.add.collider(player, ui_bar);
+        this.physics.add.collider(player, buildings);
       }
 
       function update() {
@@ -132,6 +146,14 @@
         customer.disableBody(true, true);
         money += 500;
         moneyText.setText(money);
+
+        if (customers.countActive(true) === 0) {
+          customers.children.iterate(function (child) {
+            if (Math.random() < 0.2) {
+              child.enableBody(true, child.x, child.y, true, true);
+            }
+          });
+        }
       }
       var game = new Phaser.Game(config);
     </script>
