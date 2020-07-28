@@ -223,6 +223,11 @@
       }
 
       function deliverBudget(player, customer) {
+        var budget_num = budgets.countActive(true);
+        if (budget_num <= 0) {
+          return;
+        }
+
         customer.disableBody(true, true);
         money += 500;
         moneyText.setText(money);
@@ -234,6 +239,13 @@
             }
           });
         }
+
+        budgets.children.iterate(function (child) {
+          budget_num -= 1;
+          if (budget_num < 1) {
+            child.disableBody(true, true);
+          }
+        });
       }
 
       function getBudgets(player, shop) {
