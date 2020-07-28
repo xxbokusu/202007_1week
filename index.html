@@ -26,7 +26,9 @@
       };
       var player;
       var customers;
+      var stops;
       var ui_bar;
+      var dark_area;
       var prev_x;
       var prev_y;
       var money = 1000;
@@ -35,9 +37,11 @@
       function preload() {
         this.load.image("back", "assets/bg_kusa.JPG");
         this.load.image("building", "assets/building.png");
+        this.load.image("stop", "assets/stop_s.png");
         this.load.image("yen", "assets/yen.png");
         this.load.image("customer", "assets/customer_s.png");
         this.load.image("ui_bar", "assets/UI_bar.png");
+        this.load.image("dark", "assets/black_tile.png");
         this.load.spritesheet("bike", "assets/bike_deliver_sprite.png", {
           frameWidth: 293,
           frameHeight: 288,
@@ -64,7 +68,6 @@
           frameRate: 10,
           repeat: -1,
         });
-
         this.anims.create({
           key: "right",
           frames: this.anims.generateFrameNumbers("bike", { start: 2, end: 3 }),
@@ -95,6 +98,32 @@
         });
         this.physics.add.overlap(player, customers, deliverBudget, null, this);
 
+        stops = this.physics.add.staticGroup();
+        for (var i = 1; i < 24; i++) {
+          if (Math.random() < 0.1) {
+            stops.create(
+              45 + 135 * (i % 5),
+              160 + 135 * Math.floor(i / 5),
+              "stop"
+            );
+          }
+        }
+        stops.children.iterate(function (child) {
+          child.disableBody(true, true);
+        });
+
+        dark_area = this.physics.add.staticGroup();
+        for (var i = 0; i < 100; i++) {
+          dark_area.create(
+            50 + 100 * (i % 10),
+            50 + 100 * Math.floor(i / 10),
+            "dark"
+          );
+        }
+        dark_area.children.iterate(function (child) {
+          child.alpha = 0.8;
+        });
+
         ui_bar = this.physics.add.staticGroup();
         ui_bar.create(0, 0, "ui_bar");
         this.add.image(18, 18, "yen").setScale(0.3);
@@ -106,6 +135,7 @@
         //  Collide the player and the stars with the platforms
         this.physics.add.collider(player, ui_bar);
         this.physics.add.collider(player, buildings);
+        this.physics.add.collider(player, stops);
       }
 
       function update() {
@@ -132,6 +162,7 @@
         prev_x = player.x;
         prev_y = player.y;
         money -= cost;
+        player.alpha = money / 1000;
         moneyText.setText(money);
         if (money < 0) {
           moneyText.setText(0);
@@ -140,6 +171,30 @@
           player.anims.play("stop");
           gameOver = true;
         }
+        darkAreaUpdate();
+        checkFindStop();
+      }
+
+      function darkAreaUpdate() {
+        dark_area.children.iterate(function (child) {
+          var distance =
+            Math.pow(child.x - player.x, 2) + Math.pow(child.y - player.y, 2);
+          if (distance < 10000) {
+            child.alpha = 0;
+          } else {
+            child.alpha = 0.8;
+          }
+        });
+      }
+
+      function checkFindStop() {
+        stops.children.iterate(function (child) {
+          var distance =
+            Math.pow(child.x - player.x, 2) + Math.pow(child.y - player.y, 2);
+          if (distance < 10000) {
+            child.enableBody(true, child.x, child.y, true, true);
+          }
+        });
       }
 
       function deliverBudget(player, customer) {
