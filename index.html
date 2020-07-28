@@ -26,6 +26,10 @@
       };
       var player;
       var customers;
+      var buildings;
+      var column_num = 6;
+      var shops;
+      var budgets;
       var stops;
       var ui_bar;
       var dark_area;
@@ -37,6 +41,9 @@
       function preload() {
         this.load.image("back", "assets/bg_kusa.JPG");
         this.load.image("building", "assets/building.png");
+        this.load.image("shop", "assets/shop_bistro.png");
+        this.load.image("box", "assets/box_s.png");
+
         this.load.image("stop", "assets/stop_s.png");
         this.load.image("yen", "assets/yen.png");
         this.load.image("customer", "assets/customer_s.png");
@@ -51,12 +58,21 @@
       function create() {
         this.add.image(400, 300, "back").setScale(2.0);
         buildings = this.physics.add.staticGroup();
+        shops = this.physics.add.staticGroup();
         for (var i = 1; i < 24; i++) {
-          buildings.create(
-            40 + 135 * (i % 6),
-            90 + 135 * Math.floor(i / 6),
-            "building"
-          );
+          if (i % column_num == 1 && Math.floor(i / column_num) == 1) {
+            shops.create(
+              40 + 135 * (i % column_num),
+              90 + 135 * Math.floor(i / column_num),
+              "shop"
+            );
+          } else {
+            buildings.create(
+              40 + 135 * (i % column_num),
+              90 + 135 * Math.floor(i / column_num),
+              "building"
+            );
+          }
         }
 
         prev_x = 50;
@@ -99,7 +115,8 @@
         this.physics.add.overlap(player, customers, deliverBudget, null, this);
 
         stops = this.physics.add.staticGroup();
-        for (var i = 1; i < 24; i++) {
+        stops.create(45 + 135, 160, "stop"); // for tutorial
+        for (var i = 2; i < 24; i++) {
           if (Math.random() < 0.1) {
             stops.create(
               45 + 135 * (i % 5),
@@ -131,9 +148,17 @@
           fontSize: "24px",
           fill: "#000",
         });
+        budgets = this.physics.add.staticGroup();
+        for (var i = 0; i <= 2; i++) {
+          budgets.create(760 - 50 * i, 15, "box");
+        }
+        budgets.children.iterate(function (child) {
+          child.disableBody(true, true);
+        });
+        this.physics.add.overlap(player, shops, getBudgets, null, this);
 
-        //  Collide the player and the stars with the platforms
         this.physics.add.collider(player, ui_bar);
+        this.physics.add.collider(player, shops);
         this.physics.add.collider(player, buildings);
         this.physics.add.collider(player, stops);
       }
@@ -210,6 +235,13 @@
           });
         }
       }
+
+      function getBudgets(player, shop) {
+        budgets.children.iterate(function (child) {
+          child.enableBody(true, child.x, child.y, true, true);
+        });
+      }
+
       var game = new Phaser.Game(config);
     </script>
   </body>
