@@ -42,6 +42,7 @@
         this.load.image("back", "assets/bg_kusa.JPG");
         this.load.image("building", "assets/building.png");
         this.load.image("shop", "assets/shop_bistro.png");
+        this.load.image("shop_button", "assets/shop_build_button.png");
         this.load.image("box", "assets/box_s.png");
 
         this.load.image("stop", "assets/stop_s.png");
@@ -120,7 +121,7 @@
           if (Math.random() < 0.1) {
             stops.create(
               45 + 135 * (i % 5),
-              160 + 135 * Math.floor(i / 5),
+              170 + 135 * Math.floor(i / 5),
               "stop"
             );
           }
@@ -155,6 +156,18 @@
           fontSize: "24px",
           fill: "#000",
         });
+
+        shop_build_button = this.add
+          .image(350, 18, "shop_button")
+          .setScale(0.5)
+          .setInteractive()
+          .on("pointerdown", () => buildShop());
+
+        this.add.text(310, 15, "1000->", {
+          fontSize: "12px",
+          fill: "#000",
+        });
+
         budgets = this.physics.add.staticGroup();
         for (var i = 0; i <= 2; i++) {
           budgets.create(760 - 50 * i, 15, "box");
@@ -175,7 +188,10 @@
           return;
         }
 
-        if (this.input.activePointer.isDown) {
+        if (
+          this.input.activePointer.isDown &&
+          this.input.activePointer.y >= 60
+        ) {
           player.setVelocityX((this.input.activePointer.x - player.x) * 2);
           player.setVelocityY((this.input.activePointer.y - player.y) * 2);
           if (player.body.velocity.x > 0) {
@@ -265,6 +281,28 @@
       function getBudgets(player, shop) {
         budgets.children.iterate(function (child) {
           child.enableBody(true, child.x, child.y, true, true);
+        });
+      }
+
+      function buildShop() {
+        if (money <= 1000) {
+          return;
+        }
+
+        var build_yet = true;
+        buildings.children.iterate(function (child) {
+          if (build_yet) {
+            var distance =
+              Math.pow(child.x - player.x, 2) + Math.pow(child.y - player.y, 2);
+            if (distance < 10000) {
+              child.disableBody(true, true);
+              shops.create(child.x, child.y, "shop");
+
+              money -= 1000;
+              moneyText.setText(money);
+              build_yet = false;
+            }
+          }
         });
       }
 
